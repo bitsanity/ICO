@@ -23,7 +23,7 @@ contract owned {
   }
 }
 
-// token sold by this contract must be ERC20-compliant
+// token should be ERC20-compliant and implement these functions
 interface ERC20 {
   function transfer(address to, uint256 value);
   function balanceOf( address owner ) constant returns (uint);
@@ -31,21 +31,21 @@ interface ERC20 {
 
 contract ICO is owned {
 
-  uint public constant TOKPERETH = 1500; // price: approx $0.20 ea
-
-  uint public start;    // seconds since Jan 1 1970 GMT
-  uint public duration; // seconds
-
-  ERC20 public tokenSC;
-  address treasury;
+  ERC20   public tokenSC;   // token this ICO is selling
+  address        treasury;  // [optional] where to direct incoming Ether
+  uint    public start;     // seconds since Jan 1 1970 GMT
+  uint    public duration;  // seconds
+  uint    public tokpereth; // price
 
   // If treasury has a value then all payments will automatically be sent there
   function ICO( address _erc20,
                 address _treasury,
                 uint _startSec,
-                uint _durationSec ) {
+                uint _durationSec,
+                uint _tokpereth ) {
 
     require( isContract(_erc20) );
+    require( _tokpereth > 0 );
 
     if (_treasury != address(0))
       require( isContract(_treasury) );
@@ -54,6 +54,7 @@ contract ICO is owned {
     treasury = _treasury;
     start = _startSec;
     duration = _durationSec;
+    tokpereth = _tokpereth;
   }
 
   function() payable {
@@ -66,7 +67,7 @@ contract ICO is owned {
     // = msg.value * tokpereth/1e20 * (bonus+100)
     uint qty =
       multiply( divide( multiply( msg.value,
-                                  TOKPERETH ),
+                                  tokpereth ),
                         100000000000000000000),
                 (bonus()+100) );
 
