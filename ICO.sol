@@ -66,9 +66,9 @@ contract ICO is owned {
     // = msg.value * tokpereth/1e20 * (bonus+100)
     uint qty =
       multiply( divide( multiply( msg.value,
-                                 TOKPERETH ),
-                       100000000000000000000),
-               (bonus()+100) );
+                                  TOKPERETH ),
+                        100000000000000000000),
+                (bonus()+100) );
 
     if (qty > tokenSC.balanceOf(address(this)) || qty < 1)
       revert();

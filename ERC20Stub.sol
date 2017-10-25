@@ -3,7 +3,6 @@ pragma solidity ^0.4.15;
 contract ERC20Stub
 {
   event Transfer(address indexed _from, address indexed _to, uint _value);
-  event Approval(address indexed _owner, address indexed _spender, uint _value);
 
   function ERC20Stub() {}
 
@@ -15,6 +14,7 @@ contract ERC20Stub
 
   function transfer(address _to, uint _value) returns (bool success)
   {
+    Transfer( msg.sender, _to, _value );
     return _to != address(0) && _value > 0;
   }
 }
