@@ -68,7 +68,7 @@ contract ICO is owned {
     uint qty =
       multiply( divide( multiply( msg.value,
                                   tokpereth ),
-                        100000000000000000000),
+                        1e20),
                 (bonus()+100) );
 
     if (qty > tokenSC.balanceOf(address(this)) || qty < 1)
