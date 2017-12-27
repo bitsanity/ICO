@@ -1,32 +1,24 @@
 //
 // compiler: solcjs -o ./build/contracts --optimize --abi --bin <this file>
-//  version: 0.4.15+commit.bbb8e64f.Emscripten.clang
+// 0.4.19+commit.c4cbbb05.Emscripten.clang
 //
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.19;
 
 contract owned {
   address public owner;
-
-  function owned() { owner = msg.sender; }
-
+  function owned() public { owner = msg.sender; }
+  function changeOwner( address newowner ) public onlyOwner {owner = newowner;}
+  function closedown() public onlyOwner { selfdestruct( owner ); }
   modifier onlyOwner {
     if (msg.sender != owner) { revert(); }
     _;
-  }
-
-  function changeOwner( address newowner ) onlyOwner {
-    owner = newowner;
-  }
-
-  function closedown() onlyOwner {
-    selfdestruct( owner );
   }
 }
 
 // token should be ERC20-compliant and implement these functions
 interface ERC20 {
-  function transfer(address to, uint256 value);
-  function balanceOf( address owner ) constant returns (uint);
+  function transfer(address to, uint256 value) public;
+  function balanceOf( address owner ) public constant returns (uint);
 }
 
 contract ICO is owned {
@@ -35,14 +27,14 @@ contract ICO is owned {
   address        treasury;  // [optional] where to direct incoming Ether
   uint    public start;     // seconds since Jan 1 1970 GMT
   uint    public duration;  // seconds
-  uint    public tokpereth; // price
+  uint    public tokpereth; // price : NOTE: take care regarding decimal units
 
   // If treasury has a value then all payments will automatically be sent there
   function ICO( address _erc20,
                 address _treasury,
                 uint _startSec,
                 uint _durationSec,
-                uint _tokpereth ) {
+                uint _tokpereth ) public {
 
     require( isContract(_erc20) );
     require( _tokpereth > 0 );
@@ -57,7 +49,7 @@ contract ICO is owned {
     tokpereth = _tokpereth;
   }
 
-  function() payable {
+  function() public payable {
     if (now < start || now > (start + duration))
       revert();
 
@@ -80,19 +72,19 @@ contract ICO is owned {
   }
 
   // unsold tokens can be claimed by owner after sale ends
-  function claimUnsold() onlyOwner {
+  function claimUnsold() public onlyOwner {
     if ( now < (start + duration) )
       revert();
 
     tokenSC.transfer( owner, tokenSC.balanceOf(address(this)) );
   }
 
-  function withdraw( uint amount ) onlyOwner returns (bool) {
+  function withdraw( uint amount ) public onlyOwner returns (bool) {
     require (amount <= this.balance);
     return owner.send( amount );
   }
 
-  function bonus() constant returns(uint) {
+  function bonus() internal constant returns(uint) {
     uint elapsed = now - start;
 
     if (elapsed < 48 hours) return 50;
@@ -102,7 +94,7 @@ contract ICO is owned {
     return 0;
   }
 
-  function isContract( address _a ) constant private returns (bool) {
+  function isContract( address _a ) internal view returns (bool) {
     uint ecs;
     assembly { ecs := extcodesize(_a) }
     return ecs > 0;
@@ -110,13 +102,13 @@ contract ICO is owned {
 
   // ref: github.com/OpenZeppelin/zeppelin-solidity/
   //      blob/master/contracts/math/SafeMath.sol
-  function multiply(uint256 a, uint256 b) constant private returns (uint256) {
+  function multiply(uint256 a, uint256 b) pure private returns (uint256) {
     uint256 c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function divide(uint256 a, uint256 b) constant private returns (uint256) {
+  function divide(uint256 a, uint256 b) pure private returns (uint256) {
     return a / b;
   }
 }
