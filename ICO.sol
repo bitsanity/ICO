@@ -16,7 +16,7 @@ contract owned {
 
 // token expected to be at least ERC20-compliant
 interface ERC20 {
-  function decimals() external returns (uint);
+  function decimals() external returns (uint8);
   function transfer(address to, uint256 value) external;
   function balanceOf( address owner ) external returns (uint);
 }
@@ -65,7 +65,7 @@ contract ICO is owned {
 
     // the above is in units of tokens - multiply by 10**decimals to work out
     // the number of units to transfer
-    qty = multiply( qty, 10**(tokenSC.decimals()) );
+    qty = multiply( qty, 10**(uint(tokenSC.decimals())) );
 
     if (qty > tokenSC.balanceOf(address(this)) || qty < 1)
       revert();
