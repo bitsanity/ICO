@@ -1,8 +1,7 @@
 //
-// compiler: solcjs -o ./build/contracts --optimize --abi --bin <this file>
-// 0.4.19+commit.c4cbbb05.Emscripten.clang
+// compiler: 0.4.21+commit.dfe3193c.Emscripten.clang
 //
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.21;
 
 contract owned {
   address public owner;
@@ -15,10 +14,11 @@ contract owned {
   }
 }
 
-// token should be ERC20-compliant and implement these functions
+// token expected to be at least ERC20-compliant
 interface ERC20 {
-  function transfer(address to, uint256 value) public;
-  function balanceOf( address owner ) public constant returns (uint);
+  function decimals() external returns (uint);
+  function transfer(address to, uint256 value) external;
+  function balanceOf( address owner ) external returns (uint);
 }
 
 contract ICO is owned {
@@ -63,6 +63,10 @@ contract ICO is owned {
                         1e20),
                 (bonus()+100) );
 
+    // the above is in units of tokens - multiply by 10**decimals to work out
+    // the number of units to transfer
+    qty = multiply( qty, 10**(tokenSC.decimals()) );
+
     if (qty > tokenSC.balanceOf(address(this)) || qty < 1)
       revert();
 
@@ -80,11 +84,11 @@ contract ICO is owned {
   }
 
   function withdraw( uint amount ) public onlyOwner returns (bool) {
-    require (amount <= this.balance);
+    require (amount <= address(this).balance);
     return owner.send( amount );
   }
 
-  function bonus() internal constant returns(uint) {
+  function bonus() public view returns(uint) {
     uint elapsed = now - start;
 
     if (elapsed < 48 hours) return 50;

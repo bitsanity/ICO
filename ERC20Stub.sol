@@ -14,7 +14,7 @@ contract ERC20Stub
 
   function transfer(address _to, uint _value) public returns (bool success)
   {
-    Transfer( msg.sender, _to, _value );
+    emit Transfer( msg.sender, _to, _value );
     return _to != address(0) && _value > 0;
   }
 }
